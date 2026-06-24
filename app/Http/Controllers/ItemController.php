@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreItemRequest;
 use App\Http\Requests\UpdateItemRequest;
 use App\Http\Resources\ItemResource;
+use App\Jobs\FetchItemMetadata;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -57,6 +58,20 @@ class ItemController extends Controller
         if ($tags !== null) {
             $this->syncTags($request, $item, $tags);
         }
+
+        // Enrichissement asynchrone des métadonnées si l'item provient d'une API externe.
+        if ($item->external_id) {
+            FetchItemMetadata::dispatch($item->id);
+        }
+
+        return ItemResource::make($item->load(['tags', 'loans' => fn ($q) => $q->where('returned', false)]));
+    }
+
+    public function enrich(Request $request, Item $item): ItemResource
+    {
+        $this->authorize('update', $item);
+
+        FetchItemMetadata::dispatch($item->id);
 
         return ItemResource::make($item->load(['tags', 'loans' => fn ($q) => $q->where('returned', false)]));
     }

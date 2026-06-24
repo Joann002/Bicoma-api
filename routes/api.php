@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    Route::post('items/{item}/enrich', [ItemController::class, 'enrich']);
     Route::apiResource('items', ItemController::class);
 
     Route::get('tags', [TagController::class, 'index']);
