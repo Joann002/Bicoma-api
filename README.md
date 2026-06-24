@@ -1,58 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Bicoma — API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API REST du gestionnaire de collection personnelle **Bicoma** (livres, films, séries, jeux).
+Construite avec **Laravel 13**, authentification par token via **Sanctum**, base de données
+**MySQL**, files d'attente et cache via la base de données.
 
-## About Laravel
+Le frontend (SPA Vue 3) se trouve dans le dépôt `Bicoma-front`.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fonctionnalités
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Authentification (inscription, connexion, déconnexion) par token Sanctum
+- CRUD des items avec filtres (type, statut, note, tags), recherche et pagination
+- Tags personnalisés
+- Suivi des prêts (emprunteur, dates, retours, retards)
+- Import depuis des APIs externes : **Open Library** (livres), **TMDB** (films/séries),
+  **RAWG** (jeux), avec mise en cache des réponses
+- Enrichissement asynchrone des métadonnées via un **Job** en file d'attente
+- Statistiques (répartition par type/statut/genre) et défi annuel
+- Recommandations basées sur les genres et créateurs les mieux notés
+- Partage de listes en lecture seule via un lien public
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Prérequis
 
-## Learning Laravel
+- PHP 8.3+
+- Composer
+- MySQL 8+
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Installation
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Créez la base puis renseignez les identifiants MySQL dans `.env` :
 
-## Contributing
+```sql
+CREATE DATABASE bicoma CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```dotenv
+DB_DATABASE=bicoma
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Code of Conduct
+Migrez et (optionnellement) chargez les données de démonstration :
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan migrate --seed
+```
 
-## Security Vulnerabilities
+Le compte de démo est `demo@bicoma.test` / `password`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Clés des APIs externes (optionnel)
 
-## License
+Open Library ne nécessite aucune clé. Pour les films/séries et les jeux, ajoutez vos clés
+dans `.env` :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```dotenv
+TMDB_API_KEY=...   # https://www.themoviedb.org/settings/api
+RAWG_API_KEY=...   # https://rawg.io/apidocs
+```
+
+## Lancement
+
+```bash
+php artisan serve            # API sur http://localhost:8000
+php artisan queue:work       # worker pour l'enrichissement asynchrone
+```
+
+## Tests
+
+```bash
+php artisan test
+```
+
+Les tests utilisent SQLite en mémoire (aucune configuration MySQL nécessaire).
+
+## Aperçu des routes (`/api`)
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| POST | `/register`, `/login` | Authentification |
+| POST | `/logout`, GET `/me` | Session courante |
+| GET/POST | `/items` | Liste (filtres) / création |
+| GET/PUT/DELETE | `/items/{item}` | Détail / mise à jour / suppression |
+| POST | `/items/{item}/enrich` | Relance l'enrichissement |
+| GET/POST/DELETE | `/tags` | Tags |
+| GET/POST/PUT/DELETE | `/loans` | Prêts (+ `/loans/{loan}/return`, `/loans/overdue`) |
+| GET | `/search?type=&q=` | Recherche externe |
+| GET | `/stats` | Statistiques + défi |
+| GET/POST | `/challenges` | Défi annuel |
+| GET | `/recommendations` | Recommandations |
+| GET/POST/DELETE | `/shared-lists` | Listes partagées |
+| GET | `/public/{token}` | Liste publique (lecture seule) |
+
+Le design détaillé est documenté dans
+[`docs/superpowers/specs/2026-06-24-collection-manager-design.md`](docs/superpowers/specs/2026-06-24-collection-manager-design.md).
