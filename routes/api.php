@@ -6,6 +6,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ReadingChallengeController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/public/{token}', [SharedListController::class, 'showPublic']);
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('challenges', [ReadingChallengeController::class, 'index']);
     Route::post('challenges', [ReadingChallengeController::class, 'store']);
     Route::get('recommendations', RecommendationController::class);
+
+    Route::get('shared-lists', [SharedListController::class, 'index']);
+    Route::post('shared-lists', [SharedListController::class, 'store']);
+    Route::delete('shared-lists/{sharedList}', [SharedListController::class, 'destroy']);
 
     Route::get('loans/overdue', [LoanController::class, 'overdue']);
     Route::get('loans', [LoanController::class, 'index']);
