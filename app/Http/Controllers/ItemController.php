@@ -43,10 +43,18 @@ class ItemController extends Controller
 
     public function store(StoreItemRequest $request): ItemResource
     {
+        $data = $request->validated();
+        $tags = $data['tags'] ?? null;
+        unset($data['tags']);
+
         $item = $request->user()->items()->create([
-            ...$request->validated(),
+            ...$data,
             'added_at' => now(),
         ]);
+
+        if ($tags !== null) {
+            $this->syncTags($request, $item, $tags);
+        }
 
         return ItemResource::make($item->load('tags'));
     }
@@ -62,7 +70,15 @@ class ItemController extends Controller
     {
         $this->authorize('update', $item);
 
-        $item->update($request->validated());
+        $data = $request->validated();
+        $tags = $data['tags'] ?? null;
+        unset($data['tags']);
+
+        $item->update($data);
+
+        if ($tags !== null) {
+            $this->syncTags($request, $item, $tags);
+        }
 
         return ItemResource::make($item->load('tags'));
     }
@@ -74,5 +90,20 @@ class ItemController extends Controller
         $item->delete();
 
         return response()->noContent();
+    }
+
+    /**
+     * @param  array<int, string>  $tagNames
+     */
+    private function syncTags(Request $request, Item $item, array $tagNames): void
+    {
+        $ids = collect($tagNames)
+            ->map(fn (string $name) => trim($name))
+            ->filter()
+            ->unique()
+            ->map(fn (string $name) => $request->user()->tags()->firstOrCreate(['name' => $name])->id)
+            ->all();
+
+        $item->tags()->sync($ids);
     }
 }

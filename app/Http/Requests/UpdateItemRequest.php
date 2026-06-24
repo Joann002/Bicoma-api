@@ -31,6 +31,8 @@ class UpdateItemRequest extends FormRequest
             'external_id' => ['nullable', 'string', 'max:255'],
             'external_source' => ['nullable', 'string', 'max:255'],
             'finished_at' => ['nullable', 'date'],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string', 'max:50'],
         ];
     }
 }
