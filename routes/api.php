@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ReadingChallengeController;
+use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TagController;
@@ -38,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('stats', StatisticsController::class);
     Route::get('challenges', [ReadingChallengeController::class, 'index']);
     Route::post('challenges', [ReadingChallengeController::class, 'store']);
+    Route::get('recommendations', RecommendationController::class);
 
     Route::get('loans/overdue', [LoanController::class, 'overdue']);
     Route::get('loans', [LoanController::class, 'index']);
