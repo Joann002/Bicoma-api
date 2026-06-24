@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,4 +28,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('tags', [TagController::class, 'index']);
     Route::post('tags', [TagController::class, 'store']);
     Route::delete('tags/{tag}', [TagController::class, 'destroy']);
+
+    Route::get('loans/overdue', [LoanController::class, 'overdue']);
+    Route::get('loans', [LoanController::class, 'index']);
+    Route::post('loans', [LoanController::class, 'store']);
+    Route::put('loans/{loan}', [LoanController::class, 'update']);
+    Route::post('loans/{loan}/return', [LoanController::class, 'markReturned']);
+    Route::delete('loans/{loan}', [LoanController::class, 'destroy']);
 });

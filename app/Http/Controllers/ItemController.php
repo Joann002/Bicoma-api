@@ -13,7 +13,9 @@ class ItemController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = $request->user()->items()->with('tags')->latest('added_at');
+        $query = $request->user()->items()
+            ->with(['tags', 'loans' => fn ($q) => $q->where('returned', false)])
+            ->latest('added_at');
 
         if ($type = $request->query('type')) {
             $query->where('type', $type);
@@ -56,14 +58,14 @@ class ItemController extends Controller
             $this->syncTags($request, $item, $tags);
         }
 
-        return ItemResource::make($item->load('tags'));
+        return ItemResource::make($item->load(['tags', 'loans' => fn ($q) => $q->where('returned', false)]));
     }
 
     public function show(Request $request, Item $item): ItemResource
     {
         $this->authorize('view', $item);
 
-        return ItemResource::make($item->load('tags'));
+        return ItemResource::make($item->load(['tags', 'loans' => fn ($q) => $q->where('returned', false)]));
     }
 
     public function update(UpdateItemRequest $request, Item $item): ItemResource
@@ -80,7 +82,7 @@ class ItemController extends Controller
             $this->syncTags($request, $item, $tags);
         }
 
-        return ItemResource::make($item->load('tags'));
+        return ItemResource::make($item->load(['tags', 'loans' => fn ($q) => $q->where('returned', false)]));
     }
 
     public function destroy(Request $request, Item $item): \Illuminate\Http\Response

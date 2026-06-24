@@ -31,6 +31,11 @@ class ItemResource extends JsonResource
             'added_at' => $this->added_at?->toIso8601String(),
             'finished_at' => $this->finished_at?->toIso8601String(),
             'tags' => $this->whenLoaded('tags', fn () => $this->tags->pluck('name')),
+            'active_loan' => $this->whenLoaded('loans', function () {
+                $loan = $this->loans->firstWhere('returned', false);
+
+                return $loan ? LoanResource::make($loan) : null;
+            }),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
